@@ -37,7 +37,7 @@ El objetivo principal es **comprender estructuras dinámicas (listas enlazadas y
 2. Ejecutar el archivo compilado `.exe`.
 
 
-##🧑‍🤝‍🧑 Equipo de desarrollo
+## 🧑‍🤝‍🧑 Equipo de desarrollo
 | Integrante          | GitHub               |
 | ------------------- | -------------------- |
 | Fernando Medrano    | @fernandomedrano2006 |
