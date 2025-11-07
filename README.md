@@ -36,11 +36,6 @@ El objetivo principal es **comprender estructuras dinámicas (listas enlazadas y
 1. Compilar el archivo `.cpp` con cualquier entorno compatible (Dev-C++, Visual Studio Code, etc).
 2. Ejecutar el archivo compilado `.exe`.
 
-Ejemplo en terminal:
-
-```bash
-g++ -o gestor Procesos.cpp
-./gestor
 
 ##🧑‍🤝‍🧑 Equipo de desarrollo
 | Integrante          | GitHub               |
