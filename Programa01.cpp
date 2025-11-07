@@ -3,49 +3,65 @@
 #include <fstream>
 using namespace std;
 
+// ===========================================
+// Estructura para manejar procesos en listas
+// ===========================================
 struct Proceso {
-    int id;
-    string nombre;
-    int prioridad;
-    int memoria; // <--- NUEVO CAMPO
-    string estado;
-    Proceso* sig;
+    int id;             // Identificador único del proceso
+    string nombre;      // Nombre del proceso
+    int prioridad;      // Prioridad (1 = alta, 10 = baja)
+    int memoria;        // Cantidad de memoria requerida (MB)
+    string estado;      // Estado del proceso (nuevo, listo, terminado, etc.)
+    Proceso* sig;       // Puntero al siguiente proceso (lista enlazada)
 };
 
+// ===========================================
+// Estructura para manejar memoria usando Pila
+// ===========================================
 struct PilaMemoria {
-    int valor;
-    PilaMemoria* sig;
+    int valor;              // Cantidad de memoria almacenada
+    PilaMemoria* sig;       // Puntero al siguiente elemento en la pila
 };
 
-Proceso* listaProcesos = NULL;
-Proceso* colaCPU = NULL;
-Proceso* listaTerminados = NULL;
-PilaMemoria* pilaMemoria = NULL;
+// Punteros globales a las estructuras principales
+Proceso* listaProcesos = NULL;      // Lista general de procesos
+Proceso* colaCPU = NULL;            // Cola de procesos listos para CPU (prioridad)
+Proceso* listaTerminados = NULL;    // Lista de procesos finalizados
+PilaMemoria* pilaMemoria = NULL;    // Pila de memoria asignada
 
-int nextID = 1; // ID auto-incrementable
+int nextID = 1; // ID autoincrementable para procesos
 
-// ===== UTILIDADES =====
+// ===========================================
+// FUNCIONES DE UTILIDAD
+// ===========================================
 
+// Pausa la ejecución para permitir lectura de resultados
 void pausar() {
     cout << "\nPresiona ENTER para continuar...";
     cin.ignore();
     cin.get();
 }
 
+// Limpia la pantalla
 void limpiarPantalla() {
     system("cls");
 }
 
+// Imprime el título principal del programa
 void titulo() {
     cout << "==============================================\n";
     cout << "   SISTEMA DE GESTIÓN DE PROCESOS Y MEMORIA   \n";
     cout << "==============================================\n";
 }
 
-// ===== GUARDAR EN ARCHIVO =====
+// ===========================================
+// GUARDAR DATOS EN ARCHIVO
+// ===========================================
 
 void guardarEnArchivo() {
     ofstream archivo("procesos.txt");
+
+    // Guardar lista principal
     archivo << "=== LISTA DE PROCESOS ===\n";
     Proceso* aux = listaProcesos;
     while (aux) {
@@ -55,15 +71,17 @@ void guardarEnArchivo() {
         aux = aux->sig;
     }
 
+    // Guardar cola CPU
     archivo << "\n=== COLA DE CPU ===\n";
     aux = colaCPU;
     while (aux) {
         archivo << aux->id << " | " << aux->nombre << " | P:"
-            << aux->prioridad << " | Mem: " << aux->memoria 
+            << aux->prioridad << " | Mem: " << aux->memoria
             << "MB | Estado: " << aux->estado << "\n";
         aux = aux->sig;
     }
 
+    // Guardar procesos terminados
     archivo << "\n=== PROCESOS TERMINADOS ===\n";
     aux = listaTerminados;
     while (aux) {
@@ -77,12 +95,14 @@ void guardarEnArchivo() {
     cout << "\n Datos guardados en procesos.txt";
 }
 
-// ===== LISTA PROCESOS =====
+// ===========================================
+// GESTIÓN DE LISTA DE PROCESOS
+// ===========================================
 
+// Inserta un proceso nuevo a la lista
 void insertarProceso() {
     Proceso* nuevo = new Proceso();
-
-    nuevo->id = nextID++; // ID automático
+    nuevo->id = nextID++; // Asignación automática de ID
 
     cout << "\nIngrese nombre del proceso: ";
     cin >> nuevo->nombre;
@@ -90,41 +110,47 @@ void insertarProceso() {
     cout << "Prioridad (1 = más alta, 10 = más baja): ";
     cin >> nuevo->prioridad;
 
+    // Validación de prioridad
     if (nuevo->prioridad < 1 || nuevo->prioridad > 10) {
-        cout << "\n Prioridad inválida (debe ser entre 1 y 10).\n";
+        cout << "\n Prioridad inválida.\n";
         delete nuevo;
         return;
     }
 
     cout << "Ingrese cantidad de memoria (1 - 4096 MB): ";
     cin >> nuevo->memoria;
+
+    // Validación de memoria
     if (nuevo->memoria < 1 || nuevo->memoria > 4096) {
-        cout << "\n Memoria inválida (debe estar entre 1 y 4096 MB).\n";
+        cout << "\n Memoria inválida.\n";
         delete nuevo;
         return;
     }
 
-    nuevo->estado = "nuevo";
-    nuevo->sig = listaProcesos;
+    nuevo->estado = "nuevo";        // Estado inicial
+    nuevo->sig = listaProcesos;     // Inserción al inicio
     listaProcesos = nuevo;
 
     cout << "\n Proceso agregado correctamente. (ID asignado: " << nuevo->id << ")";
 }
 
+// Busca un proceso por ID y lo retorna
 Proceso* buscarProceso(int id) {
     Proceso* aux = listaProcesos;
-    while (aux != NULL) {
+    while (aux) {
         if (aux->id == id) return aux;
         aux = aux->sig;
     }
     return NULL;
 }
 
+// Interfaz para buscar proceso
 void buscarProcesoMenu() {
     int id;
     cout << "\nIngrese ID a buscar: ";
     cin >> id;
     Proceso* p = buscarProceso(id);
+
     if (p)
         cout << "\n Proceso encontrado: " << p->nombre << " | P:" 
         << p->prioridad << " | Mem: " << p->memoria << "MB | " << p->estado;
@@ -132,13 +158,14 @@ void buscarProcesoMenu() {
         cout << "\n No existe un proceso con ese ID.";
 }
 
+// Elimina proceso por ID
 void eliminarProceso() {
     int id;
     cout << "\nIngrese ID a eliminar: ";
     cin >> id;
 
     Proceso* aux = listaProcesos, *ant = NULL;
-    while (aux != NULL) {
+    while (aux) {
         if (aux->id == id) {
             if (ant) ant->sig = aux->sig;
             else listaProcesos = aux->sig;
@@ -152,6 +179,7 @@ void eliminarProceso() {
     cout << "\n Proceso no encontrado.";
 }
 
+// Modifica la prioridad de un proceso
 void modificarPrioridad() {
     int id;
     cout << "\nIngrese ID del proceso: ";
@@ -171,10 +199,12 @@ void modificarPrioridad() {
         cout << "\n Valor inválido.";
         return;
     }
+
     p->prioridad = nueva;
     cout << "\n Prioridad actualizada.";
 }
 
+// Muestra la lista de procesos
 void mostrarProcesos() {
     cout << "\n=== LISTA DE PROCESOS ===\n";
     Proceso* aux = listaProcesos;
@@ -187,8 +217,11 @@ void mostrarProcesos() {
     }
 }
 
-// ===== COLA CPU =====
+// ===========================================
+// COLA DE PRIORIDAD (CPU)
+// ===========================================
 
+// Selecciona el proceso de mayor prioridad (número menor) y lo pasa a la cola de CPU
 void encolarCPU() {
     if (!listaProcesos) {
         cout << "\n No hay procesos disponibles.";
@@ -196,6 +229,8 @@ void encolarCPU() {
     }
 
     Proceso* aux = listaProcesos, *mejor = aux, *ant = NULL, *antMejor = NULL;
+
+    // Se busca el proceso con menor prioridad (más importante)
     while (aux) {
         if (aux->prioridad < mejor->prioridad) {
             mejor = aux;
@@ -205,6 +240,7 @@ void encolarCPU() {
         aux = aux->sig;
     }
 
+    // Se desconecta de la lista principal
     if (antMejor) antMejor->sig = mejor->sig;
     else listaProcesos = mejor->sig;
 
@@ -215,6 +251,7 @@ void encolarCPU() {
     cout << "\n Proceso encolado en CPU.";
 }
 
+// Ejecuta el proceso en CPU y lo mueve a la lista de terminados
 void ejecutarCPU() {
     if (!colaCPU) {
         cout << "\n La cola está vacía.";
@@ -231,6 +268,7 @@ void ejecutarCPU() {
     cout << "\n Proceso ejecutado.";
 }
 
+// Muestra la cola CPU
 void mostrarColaCPU() {
     cout << "\n=== COLA CPU ===\n";
     Proceso* aux = colaCPU;
@@ -243,8 +281,11 @@ void mostrarColaCPU() {
     }
 }
 
-// ===== MEMORIA PILA =====
+// ===========================================
+// MANEJO DE MEMORIA (PILA)
+// ===========================================
 
+// Agrega memoria a la pila (push)
 void pushMemoria() {
     int v;
     cout << "\nIngrese el valor de memoria: ";
@@ -253,9 +294,11 @@ void pushMemoria() {
     nuevo->valor = v;
     nuevo->sig = pilaMemoria;
     pilaMemoria = nuevo;
+
     cout << "\n Memoria asignada.";
 }
 
+// Libera memoria de la pila (pop)
 void popMemoria() {
     if (!pilaMemoria) {
         cout << "\n No hay memoria que liberar.";
@@ -267,6 +310,7 @@ void popMemoria() {
     cout << "\n Memoria liberada.";
 }
 
+// Muestra el estado actual de la pila de memoria
 void mostrarMemoria() {
     cout << "\n=== ESTADO DE LA PILA DE MEMORIA ===\n";
     PilaMemoria* aux = pilaMemoria;
@@ -278,7 +322,9 @@ void mostrarMemoria() {
     cout << "\n";
 }
 
-// ===== MENUS =====
+// ===========================================
+// MENÚS DE OPCIONES
+// ===========================================
 
 void menuLista() {
     int op;
@@ -292,7 +338,6 @@ void menuLista() {
         cout << "4) Modificar prioridad\n";
         cout << "5) Mostrar procesos\n";
         cout << "0) Volver\n> ";
-        cout << "Ingrese opción (0-5):";
         cin >> op;
 
         switch (op) {
@@ -301,8 +346,6 @@ void menuLista() {
         case 3: eliminarProceso(); break;
         case 4: modificarPrioridad(); break;
         case 5: mostrarProcesos(); break;
-        case 0: break;
-        default: cout << "\n Opción inválida."; break;
         }
         pausar();
     } while (op != 0);
@@ -318,15 +361,12 @@ void menuCPU() {
         cout << "2) Ejecutar proceso (desencolar)\n";
         cout << "3) Mostrar cola\n";
         cout << "0) Volver\n> ";
-        cout << "Ingrese opción (0-3):";
         cin >> op;
 
         switch (op) {
         case 1: encolarCPU(); break;
         case 2: ejecutarCPU(); break;
         case 3: mostrarColaCPU(); break;
-        case 0: break;
-        default: cout << "\n Opción inválida."; break;
         }
         pausar();
     } while (op != 0);
@@ -342,22 +382,24 @@ void menuMemoria() {
         cout << "2) Liberar memoria (pop)\n";
         cout << "3) Mostrar estado de la memoria\n";
         cout << "0) Volver\n> ";
-        cout << "Ingrese opción (0-3):";
         cin >> op;
 
         switch (op) {
         case 1: pushMemoria(); break;
         case 2: popMemoria(); break;
         case 3: mostrarMemoria(); break;
-        case 0: break;
-        default: cout << "\n Opción inválida."; break;
         }
         pausar();
     } while (op != 0);
 }
 
+// ===========================================
+// PROGRAMA PRINCIPAL
+// ===========================================
+
 int main() {
-    setlocale(LC_CTYPE, "Spanish");
+    setlocale(LC_CTYPE, "Spanish"); // Permite acentos en consola
+
     int op;
     do {
         limpiarPantalla();
@@ -368,7 +410,6 @@ int main() {
         cout << "3) Gestión de memoria (pila)\n";
         cout << "4) Guardar todo en archivo\n";
         cout << "0) Salir\n> ";
-        cout << "Ingrese opción (0-4):";
         cin >> op;
 
         switch (op) {
@@ -376,8 +417,6 @@ int main() {
         case 2: menuCPU(); break;
         case 3: menuMemoria(); break;
         case 4: guardarEnArchivo(); pausar(); break;
-        case 0: break;
-        default: cout << "\n Opción inválida."; pausar(); break;
         }
     } while (op != 0);
 
